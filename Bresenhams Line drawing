@@ -1,0 +1,170 @@
+#include <bits/stdc++.h>
+#include <GL/glut.h>
+#define w 800
+#define h 800
+using namespace std;
+
+GLint startX, startY, endX, endY;
+
+void setpixel(GLint x, GLint y) {
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_POINTS);
+    glVertex2f(x, y);
+    glEnd();
+    glFlush();
+}
+
+class line {
+public:
+
+    void Bresenham(int choice) {
+        GLint dx = abs(endX - startX);
+        GLint dy = abs(endY - startY);
+        bool slope = dy > dx;
+
+        if (slope) {
+            GLint x1 = startX, y1 = startY, x2 = endX, y2 = endY;
+            if (y1 > y2) {
+                swap(x1, x2);
+                swap(y1, y2);
+            }
+
+            GLint p = 2 * dx - dy;
+            GLint x = x1;
+            GLint y = y1;
+            int i = 0;
+
+            setpixel(x, y);
+
+            while (y < y2) {
+                y++;
+                if (p < 0) {
+                    p += 2 * dx;
+                } else {
+                    x += (x2 > x1) ? 1 : -1;
+                    p += 2 * (dx - dy);
+                }
+
+                if (choice == 1) {
+                    setpixel(x, y); // Simple
+                } else if (choice == 2 && i % 5 == 0) {
+                    setpixel(x, y); // Dotted
+                } else if (choice == 3 && i % 10 < 5) {
+                    setpixel(x, y); // Dashed
+                } else if (choice == 4) {
+                    glPointSize(4.0);
+                    setpixel(x, y); // Solid
+                    glPointSize(1.0);
+                }
+                i++;
+            }
+        } else {
+            GLint x1 = startX, y1 = startY, x2 = endX, y2 = endY;
+            if (x1 > x2) {
+                swap(x1, x2);
+                swap(y1, y2);
+            }
+
+            GLint p = 2 * dy - dx;
+            GLint x = x1;
+            GLint y = y1;
+            int i = 0;
+
+            setpixel(x, y);
+
+            while (x < x2) {
+                x++;
+                if (p < 0) {
+                    p += 2 * dy;
+                } else {
+                    y += (y2 > y1) ? 1 : -1;
+                    p += 2 * (dy - dx);
+                }
+
+                if (choice == 1) {
+                    setpixel(x, y); // Simple
+                } else if (choice == 2 && i % 5 == 0) {
+                    setpixel(x, y); // Dotted
+                } else if (choice == 3 && i % 10 < 5) {
+                    setpixel(x, y); // Dashed
+                } else if (choice == 4) {
+                    glPointSize(4.0);
+                    setpixel(x, y); // Solid
+                    glPointSize(1.0);
+                }
+                i++;
+            }
+        }
+    }
+};
+
+line obj;
+
+void initialize() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(-w / 2, w / 2, -h / 2, h / 2);
+}
+
+void choice() {
+    glPointSize(2.0);
+    for (int i = -w; i < w; i++) {
+        setpixel(i, 0);
+        setpixel(0, i);
+    }
+}
+
+void mouse(int button, int state, int x, int y) {
+    if (state == GLUT_DOWN) {
+        if (button == GLUT_LEFT_BUTTON) {
+            startX = x - w / 2;
+            startY = h / 2 - y;
+            glPointSize(2.0);
+            setpixel(startX, startY);
+        } else if (button == GLUT_RIGHT_BUTTON) {
+            endX = x - w / 2;
+            endY = h / 2 - y;
+            glPointSize(2.0);
+            setpixel(endX, endY);
+        }
+    }
+}
+
+void keyboard(unsigned char key, int x, int y) {
+    if (key == 27) {
+        exit(0);
+    }
+}
+
+void menu(int choice) {
+    if (choice == 5) {
+        exit(0);
+    } else {
+        obj.Bresenham(choice);
+    }
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitWindowSize(800, 800);
+    glutInitWindowPosition(100, 0);
+    glutCreateWindow("Bresenham's Line Styles");
+    initialize();
+
+    glutDisplayFunc(choice);
+    glutMouseFunc(mouse);
+    glutKeyboardFunc(keyboard);
+
+    glutCreateMenu(menu);
+    glutAddMenuEntry("Bresenham simple", 1);
+    glutAddMenuEntry("Bresenham dotted", 2);
+    glutAddMenuEntry("Bresenham dashed", 3);
+    glutAddMenuEntry("Bresenham solid", 4);
+    glutAddMenuEntry("Exit", 5);
+    glutAttachMenu(GLUT_MIDDLE_BUTTON);
+
+    glutMainLoop();
+    return 0;
+}
