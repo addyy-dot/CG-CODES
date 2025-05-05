@@ -1,0 +1,96 @@
+#include <GL/gl.h>
+#include <GL/glut.h>
+#include <math.h>
+
+int frameNumber = 0;
+int direction = 1;       // 1 = clockwise, -1 = anticlockwise
+bool isRunning = true;   // Controls if windmill is rotating
+
+void drawWindmill() {
+    int i;
+
+    glColor3f(1.0, 1.0, 0.0);  // Yellow
+    glBegin(GL_POLYGON);
+        glVertex2f(-0.05f, 0);
+        glVertex2f(-0.05f, 3);
+        glVertex2f(0.05f, 3);
+        glVertex2f(0.05f, 0);
+    glEnd();
+
+    // Move origin to top of the base
+    glTranslatef(0, 3, 0);
+
+    // Rotate blades
+    glRotated(frameNumber * 4.0 * direction, 0, 0, 1);  // Use direction
+
+    // Draw blades
+    glColor3f(1.0, 0.0, 0.0);  // Red
+    for (i = 0; i < 4; i++) {
+        glRotated(90, 0, 0, 1);  // Rotate for next blade
+        glBegin(GL_POLYGON);
+            glVertex2f(0, 0);
+            glVertex2f(1.0f, 0.2f);
+            glVertex2f(1.0f, -0.2f);
+        glEnd();
+    }
+}
+
+// Display function
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+
+    glPushMatrix();
+    glTranslated(3.7, 0.8, 0);   // Position of the big windmill
+    glScaled(0.7, 0.7, 1);       // Size of the big windmill
+    drawWindmill();
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+
+// Timer function for animation
+void doFrame(int v) {
+    if (isRunning) {
+        frameNumber++;
+    }
+    glutPostRedisplay();
+    glutTimerFunc(10, doFrame, 0);
+}
+
+// Keyboard function for controls
+void keyboard(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'a': case 'A':
+            direction = 1;  // Clockwise
+            break;
+        case 'c': case 'C':
+            direction = -1; // Anticlockwise
+            break;
+        case 's': case 'S':
+            isRunning = !isRunning; // Toggle pause/resume
+            break;
+    }
+}
+void init() {
+    glClearColor(0, 0, 0, 0);  // Black background
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, 7, -1, 4, -1, 1);  // Set coordinate system
+    glMatrixMode(GL_MODELVIEW);
+}
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE);
+    glutInitWindowSize(700, 500);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Windmill with Keyboard Control");
+
+    init();
+    glutDisplayFunc(display);
+    glutTimerFunc(200, doFrame, 0);
+    glutKeyboardFunc(keyboard);  // Add keyboard handler
+
+    glutMainLoop();
+    return 0;
+}
