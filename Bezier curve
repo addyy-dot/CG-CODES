@@ -1,118 +1,84 @@
-#include<bits/stdc++.h>
-#include<windows.h>
-#include <stdio.h>
-#include<iostream>
-#include<GL/glut.h>
-#include<math.h>
+#include <windows.h>      // For Sleep
+#include <GL/glut.h>
+#include <cmath>          // For pow
 
-//This is a point class, used to store the coordinates of the point
-class Point
-{
-public:
-    int x, y;
-    void setxy(int _x, int _y)
-    {
-        x = _x;
-        y = _y;
-    }
-};
+int points[4][2];
+int pointcount=0;
 
-//Number of points
-static int POINTSNUM = 0;
-
-//Used to store a collection of points, because the Bezier curves with 4 points are drawn, so the array size is 4
-static Point points[4];
-
-//Initialization function
-void init(void)
-{
-    glClearColor(0.0, 0.0, 0.0,0);
-    glColor3f(1.0, 1.0, 1.0);
-    glPointSize(4.0);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0.0, 600.0, 0.0, 480.0); //Parallel projection, the four parameters are x, y range
+void init(){
+glClear(GL_COLOR_BUFFER_BIT);
+glClearColor(0.0,0.0,0.0,1.0);
+glPointSize(2.0f);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+gluOrtho2D(0,600,0,480);
 }
 
-//Draw points
-void setPoint(Point p)
-{
-    glBegin(GL_POINTS);
-    glVertex2f(p.x, p.y);
-    glEnd();
-    glFlush();
+void display(){}
+
+void drawpoint(int x,int y){
+glColor3f(1.0,0.0,0.0);
+glBegin(GL_POINTS);
+glVertex2f(x,y);
+glEnd();
+glFlush();
 }
 
-// draw a straight line
-void setline(Point p1, Point p2)
-{
-    glBegin(GL_LINES);
-    glVertex2f(p1.x, p1.y);//Set vertex coordinates
-    glVertex2f(p2.x, p2.y);
-    glEnd();
-    glFlush();//Empty the buffer
+void drawline(int x1,int y1,int x2,int y2){
+glBegin(GL_LINES);
+glVertex2f(x1,y1);
+glVertex2f(x2,y2);
+glEnd();
+glFlush();
 }
 
-// Draw Bezier curve
-Point setBezier(Point p1, Point p2, Point p3, Point p4, double t)
-{
-    Point p;
-    double a1 = pow((1 - t), 3);
-    double a2 = pow((1 - t), 2) * 3 * t;
-    double a3 = 3 * t*t*(1 - t);
-    double a4 = t * t*t;
-    p.x = a1 * p1.x + a2 * p2.x + a3 * p3.x + a4 * p4.x;
-    p.y = a1 * p1.y + a2 * p2.y + a3 * p3.y + a4 * p4.y;
-    return p;
+void curve(float t,int &x,int &y){
+    float u=1-t;
+    float b1=u*u*u;
+    float b2=3*t*u*u;
+    float b3=3*t*t*u;
+    float b4=t*t*t;
+    x=b1*points[0][0]+b2*points[1][0]+b3*points[2][0]+b4*points[3][0];
+    y=b1*points[0][1]+b2*points[1][1]+b3*points[2][1]+b4*points[3][1];
 }
 
-//display function
-void display()
-{
-    //glClear(GL_COLOR_BUFFER_BIT);
-    //glFlush();
-}
+void mouseFunc(int button,int state,int x,int y){
+    if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
+        points[pointcount][0]=x;
+        points[pointcount][1]=480-y;
 
-// mouse event
-void mymouseFunction(int button, int state, int x, int y)
-{
-    if (state == GLUT_DOWN)
-    {
-        points[POINTSNUM].setxy(x, 480 - y);
-        glColor3f(1.0, 0.0, 0.0);
-        setPoint(points[POINTSNUM]);
-        glColor3f(1.0, 0.0, 0.0);
-        if (POINTSNUM > 0) setline(points[POINTSNUM - 1], points[POINTSNUM]);
-        if (POINTSNUM == 3)
-        {
-            //Draw Bezier curve
-            glColor3f(1.0, 1.0, 0.0); // Set the color of the Bezier curve
-            Point p_current = points[0]; //Set as starting point
-            for (double t = 0.0; t <= 1.0; t += 0.05)
-            {
-                Point P = setBezier(points[0], points[1], points[2], points[3], t);
-                setline(p_current, P);
-                p_current = P;
-            }
-            POINTSNUM = 0;
+        drawpoint(x,480-y);
+        if(pointcount>0){
+            drawline(points[pointcount-1][0],points[pointcount-1][1],x,480-y);
         }
-        else
-        {
-            POINTSNUM++;
+        pointcount++;
+        if(pointcount==4){
+                int px=points[0][0];
+                int py=points[0][1];
+                for(float t=0.0;t<1.0;t+=0.02){
+                        int cx=0,cy=0;
+                    glColor3f(1.0, 1.0, 0.0);
+                    curve(t,cx,cy);
+                    drawline(px,py,cx,cy);
+                px=cx;
+                py=cy;
+                }
+                pointcount=0;
         }
     }
+
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(600, 480);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Bezier curve");
+    glutCreateWindow("Bezier Curve (No Point Class)");
+
     init();
-    glutMouseFunc(mymouseFunction);
     glutDisplayFunc(display);
+    glutMouseFunc(mouseFunc);
     glutMainLoop();
     return 0;
 }
