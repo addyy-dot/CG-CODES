@@ -1,124 +1,84 @@
+#include <windows.h>      // For Sleep
 #include <GL/glut.h>
-#include <cmath>
-#include <cstdlib>
+#include <cmath>          // For pow
 
-#define w 500
-#define h 500
+int points[4][2];
+int pointcount=0;
 
-GLint centerX, centerY, pointX, pointY;
-
-void setpixel(GLint x, GLint y)
-{
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_POINTS);
-    glVertex2i(x, y);
-    glEnd();
-    glFlush();
+void init(){
+glClear(GL_COLOR_BUFFER_BIT);
+glClearColor(0.0,0.0,0.0,1.0);
+glPointSize(2.0f);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+gluOrtho2D(0,600,0,480);
 }
 
-void initialize()
-{
-    glClearColor(1.0, 1.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(-w / 2, w / 2, -h / 2, h / 2);
+void display(){}
+
+void drawpoint(int x,int y){
+glColor3f(1.0,0.0,0.0);
+glBegin(GL_POINTS);
+glVertex2f(x,y);
+glEnd();
+glFlush();
 }
 
-void choice()
-{
-    glPointSize(2.0);
-    for (int i = -w; i < w; i++) {
-        setpixel(0, i);
-        setpixel(i, 0);
-    }
+void drawline(int x1,int y1,int x2,int y2){
+glBegin(GL_LINES);
+glVertex2f(x1,y1);
+glVertex2f(x2,y2);
+glEnd();
+glFlush();
 }
 
-class Circle
-{
-public:
-    void drawCircle(int centerX, int centerY, int x, int y)
-    {
-        setpixel(centerX + x, centerY + y);
-        setpixel(centerX - x, centerY + y);
-        setpixel(centerX + x, centerY - y);
-        setpixel(centerX - x, centerY - y);
-        setpixel(centerX + y, centerY + x);
-        setpixel(centerX - y, centerY + x);
-        setpixel(centerX + y, centerY - x);
-        setpixel(centerX - y, centerY - x);
-    }
+void curve(float t,int &x,int &y){
+    float u=1-t;
+    float b1=u*u*u;
+    float b2=3*t*u*u;
+    float b3=3*t*t*u;
+    float b4=t*t*t;
+    x=b1*points[0][0]+b2*points[1][0]+b3*points[2][0]+b4*points[3][0];
+    y=b1*points[0][1]+b2*points[1][1]+b3*points[2][1]+b4*points[3][1];
+}
 
-    void BresenhamCircle()
-    {
-        int r = sqrt((centerX - pointX) * (centerX - pointX) + (centerY - pointY) * (centerY - pointY));
-        int x = 0, y = r;
-        int d = 3 - 2 * r;
+void mouseFunc(int button,int state,int x,int y){
+    if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
+        points[pointcount][0]=x;
+        points[pointcount][1]=480-y;
 
-        drawCircle(centerX, centerY, x, y);
-        while (y >= x) {
-            x++;
-            if (d > 0) {
-                y--;
-                d = d + 4 * (x - y) + 10;
-            }
-            else {
-                d = d + 4 * x + 6;
-            }
-            drawCircle(centerX, centerY, x, y);
+        drawpoint(x,480-y);
+        if(pointcount>0){
+            drawline(points[pointcount-1][0],points[pointcount-1][1],x,480-y);
+        }
+        pointcount++;
+        if(pointcount==4){
+                int px=points[0][0];
+                int py=points[0][1];
+                for(float t=0.0;t<1.0;t+=0.02){
+                        int cx=0,cy=0;
+                    glColor3f(1.0, 1.0, 0.0);
+                    curve(t,cx,cy);
+                    drawline(px,py,cx,cy);
+                px=cx;
+                py=cy;
+                }
+                pointcount=0;
         }
     }
-};
 
-Circle obj;
-
-void keyboard(unsigned char key, int x, int y)
-{
-    if (key == 27)  // ESC key
-        exit(0);
 }
 
-void menu(int item)
-{
-    if (item == 1) {
-        obj.BresenhamCircle();
-    }
-    else if (item == 2) {
-        exit(0);
-    }
-}
-
-void mouse(int button, int state, int x, int y)
-{
-    if (state == GLUT_DOWN) {
-        if (button == GLUT_LEFT_BUTTON) {
-            centerX = x - 250;
-            centerY = 250 - y;
-            glPointSize(2.0);
-            setpixel(centerX, centerY);
-        }
-        else if (button == GLUT_RIGHT_BUTTON) {
-            pointX = x - 250;
-            pointY = 250 - y;
-            setpixel(pointX, pointY);
-        }
-    }
-}
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitWindowSize(w, h);
-    glutInitWindowPosition(100, 0);
-    glutCreateWindow("Assignment 3 - Bresenham Circle");
-    initialize();
-    glutDisplayFunc(choice);
-    glutMouseFunc(mouse);
-    glutKeyboardFunc(keyboard);
-    glutCreateMenu(menu);
-    glutAddMenuEntry("CIRCLE", 1);
-    glutAddMenuEntry("EXIT", 2);
-    glutAttachMenu(GLUT_MIDDLE_BUTTON);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(600, 480);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Bezier Curve (No Point Class)");
+
+    init();
+    glutDisplayFunc(display);
+    glutMouseFunc(mouseFunc);
     glutMainLoop();
     return 0;
 }
