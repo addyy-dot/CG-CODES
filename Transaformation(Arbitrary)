@@ -1,0 +1,117 @@
+#include<GL/glut.h>
+#include<bits/stdc++.h>
+using namespace std;
+
+void display(){
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(0.0f, 0.5f);
+        glVertex2f(-0.5f, -0.5f);
+        glVertex2f(0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}
+
+void init(){
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D(-1, 1, -1, 1);
+}
+
+void menu(int op) {
+    glLoadIdentity(); // Reset transformations before each operation
+    glClear(GL_COLOR_BUFFER_BIT);
+    display();
+    switch(op) {
+    case 1: // Scaling
+        {
+        float scale[16]={
+           0.5,0,0,0,
+           0,0.5,0,0,
+           0,0,1,0,
+           0,0,0,1
+        };
+        glMultMatrixf(scale);
+        }
+        break;
+
+    case 2: // Reflection over X-axis
+        {
+        float Rx[16]={
+           1,0,0,0,
+           0,-1,0,0,
+           0,0,1,0,
+           0,0,0,1
+        };
+        glMultMatrixf(Rx);
+        }
+        break;
+
+    case 3: // Reflection over Y-axis
+        {
+        float Ry[16]={
+           -1,0,0,0,
+           0,1,0,0,
+           0,0,1,0,
+           0,0,0,1
+        };
+        glMultMatrixf(Ry);
+        }
+        break;
+
+    case 4: // Reflection over X = Y
+        {
+        float Rxy[16]={
+           0,1,0,0,
+           1,0,0,0,
+           0,0,1,0,
+           0,0,0,1
+        };
+        glMultMatrixf(Rxy);
+        }
+        break;
+
+    case 5: // Rotation about arbitrary point (e.g., (0.0, 0.0))
+        glTranslatef(0.0, 0.0, 0.0);
+        glRotatef(45, 0, 0, 1);
+        glTranslatef(-0.0, -0.0, 0.0);
+        break;
+
+    case 6: // Exit
+        exit(0);
+    }
+
+    // Draw triangle after transformation
+    glColor3f(1, 0, 0);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(0.0f, 0.5f);
+        glVertex2f(-0.5f, -0.5f);
+        glVertex2f(0.5f, -0.5f);
+    glEnd();
+    glFlush();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(600, 600);
+    glutCreateWindow("Triangle Transformations");
+
+    init();
+    glutDisplayFunc(display);
+
+    glutCreateMenu(menu);
+    glutAddMenuEntry("Scaling", 1);
+    glutAddMenuEntry("Reflect X", 2);
+    glutAddMenuEntry("Reflect Y", 3);
+    glutAddMenuEntry("Reflect X=Y", 4);
+    glutAddMenuEntry("Rotate about arbitrary point", 5);
+    glutAddMenuEntry("EXIT", 6);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+    glutMainLoop();
+    return 0;
+}
