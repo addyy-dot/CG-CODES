@@ -1,0 +1,107 @@
+#include <GL/glut.h>
+#include <bits/stdc++.h>
+using namespace std;
+
+void display() {
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(0.0f, 0.5f);   // Top vertex
+        glVertex2f(-0.5f, -0.5f); // Bottom-left
+        glVertex2f(0.5f, -0.5f);  // Bottom-right
+    glEnd();
+    glFlush();
+}
+
+void init() {
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D(-1, 1, -1, 1);
+}
+
+void menu(int op) {
+    glLoadIdentity(); // Reset transformations before each operation
+    glClear(GL_COLOR_BUFFER_BIT);
+    display();
+    switch(op) {
+        case 1: { // Rotation (45 degrees)
+            float angle = 45.0 * M_PI / 180.0; // Convert to radians
+            float rotate[16] = {
+                cos(angle), sin(angle), 0, 0,
+               -sin(angle), cos(angle), 0, 0,
+                0,          0,          1, 0,
+                0,          0,          0, 1
+            };
+            glMultMatrixf(rotate);
+        }
+        break;
+
+        case 2: { // Shear in X-direction
+            float shearX[16] = {
+                1.0, 0.0, 0.0, 0.0,
+                0.5, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            };
+            glMultMatrixf(shearX);
+        }
+        break;
+
+        case 3: { // Shear in Y-direction
+            float shearY[16] = {
+                1.0, 0.5, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0
+            };
+            glMultMatrixf(shearY);
+        }
+        break;
+
+        case 4: { // Translation
+            float translate[16] = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0.5, 0.5, 0, 1
+            };
+            glMultMatrixf(translate);
+        }
+        break;
+
+        case 5:
+            exit(0);
+    }
+
+    // Draw triangle after transformation
+    glColor3f(1, 0, 0);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(0.0f, 0.5f);   // Top vertex
+        glVertex2f(-0.5f, -0.5f); // Bottom-left
+        glVertex2f(0.5f, -0.5f);  // Bottom-right
+    glEnd();
+    glFlush();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(600, 600);
+    glutCreateWindow("Triangle Transformation");
+
+    init();
+    glutDisplayFunc(display);
+
+    glutCreateMenu(menu);
+    glutAddMenuEntry("Rotate", 1);
+    glutAddMenuEntry("Shear X", 2);
+    glutAddMenuEntry("Shear Y", 3);
+    glutAddMenuEntry("Translate", 4);
+    glutAddMenuEntry("EXIT", 5);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+    glutMainLoop();
+    return 0;
+}
